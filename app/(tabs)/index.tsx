@@ -13,10 +13,13 @@ export default function SplashScreen() {
         Oblong: require("../../assets/fonts/oblong.ttf"),
       });
       setFontsLoaded(true);
+
+      setTimeout(() => {
+        router.replace("/login"); 
+      }, 4000);
     }
     loadFonts();
   }, []);
-
 
   if (!fontsLoaded) return null;
 
