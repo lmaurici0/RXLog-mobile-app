@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import {
   View,
-  Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Image,
+  Text,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useFonts } from "expo-font";
-import { useRouter } from "expo-router"; // 👈 Novo hook do Expo Router
+import { useRouter } from "expo-router"; 
 
 export const options = {
   headerShown: false,
@@ -16,7 +17,7 @@ export const options = {
 };
 
 export default function LoginScreen() {
-  const router = useRouter(); // 👈 Router para navegação
+  const router = useRouter(); 
 
   const [fontsLoaded] = useFonts({
     Oblong: require("../../assets/fonts/oblong.ttf"),
@@ -30,15 +31,16 @@ export default function LoginScreen() {
   const handleLogin = () => {
     console.log("Email:", email);
     console.log("Senha:", senha);
-
-    // Aqui você pode validar login (API, etc.)
-    // Se estiver ok, navega para Home
-    router.replace("/home"); // 👈 substitui a tela de login
+    router.replace("/home"); 
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>RxLog</Text>
+      <Image
+        source={require("../../assets/images/appLogo.png")} 
+        style={styles.logo}
+        resizeMode="contain"
+      />
 
       <View style={styles.inputContainer}>
         <MaterialIcons name="email" size={20} color="black" style={styles.icon} />
@@ -80,9 +82,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   logo: {
-    fontSize: 50,
-    fontFamily: "Oblong",
-    color: "#98C8B7",
+    width: 180,
+    height: 180,
     marginBottom: 60,
   },
   inputContainer: {
@@ -94,6 +95,11 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     width: "100%",
     height: 50,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
   icon: {
     marginRight: 10,
@@ -104,16 +110,21 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   button: {
-    backgroundColor: "#278C67",
-    borderRadius: 25,
-    paddingVertical: 12,
-    width: "60%",
+    backgroundColor: "#00968a",
+    borderRadius: 30,
+    paddingVertical: 14,
+    width: "70%",
     alignItems: "center",
     marginTop: 20,
+    shadowColor: "#00968a",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   buttonText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "600",
   },
 });

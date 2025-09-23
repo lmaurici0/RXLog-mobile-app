@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Image, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import * as Font from "expo-font";
 
@@ -25,7 +25,11 @@ export default function SplashScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>RxLog</Text>
+      <Image 
+        source={require("../../assets/images/appLogo.png")} 
+        style={styles.logo}
+        resizeMode="contain"
+      />
     </View>
   );
 }
@@ -33,13 +37,12 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#278C67",
+    backgroundColor: "#00968a",
     justifyContent: "center",
     alignItems: "center",
   },
   logo: {
-    fontSize: 60,
-    fontFamily: "Oblong",
-    color: "#98C8B7",
+    width: 200,    
+    height: 200,   
   },
 });
