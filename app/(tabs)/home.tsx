@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Font from "expo-font";
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 
 type DataItem = {
   key: number;
@@ -24,12 +25,13 @@ type DataItem = {
 type DatasetKey = "Estoque" | "Vencimento" | "Menor Estoque";
 
 export default function HomeScreen() {
+  const router = useRouter();
   const [selectedDataset, setSelectedDataset] = useState<DatasetKey>("Estoque");
   const [selectedSlice, setSelectedSlice] = useState<DataItem | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const [animatedData, setAnimatedData] = useState<number[]>([]);
-  const [activeTab, setActiveTab] = useState<"home" | "leaf" | "time">("home");
+  const [activeTab, setActiveTab] = useState<"user" | "home" | "time">("home");
 
   const [dataSets, setDataSets] = useState<Record<DatasetKey, DataItem[]>>({
     Estoque: [],
@@ -54,13 +56,13 @@ export default function HomeScreen() {
     async function fetchData() {
       try {
         const estoqueRes = await axios.get(
-          "http://192.168.18.191:8080/medicamentos/disponibilidade"
+          "http://10.35.233.116:8080/medicamentos/disponibilidade"
         );
         const vencimentoRes = await axios.get(
-          "http://192.168.18.191:8080/medicamentos/estoque-vencido-vs-regular"
+          "http://10.35.233.116:8080/medicamentos/estoque-vencido-vs-regular"
         );
         const menorEstoqueRes = await axios.get(
-          "http://192.168.18.191:8080/medicamentos/menor-estoque"
+          "http://10.35.233.116:8080/medicamentos/menor-estoque"
         );
 
         setDataSets({
@@ -80,7 +82,9 @@ export default function HomeScreen() {
             key: i + 1,
             label: item.nome,
             value: item.quantidade,
-            color: ["#00968a", "#f2a384", "#39d2c0", "#dbe2e7", "#ffcc80"][i % 5],
+            color: ["#00968a", "#f2a384", "#39d2c0", "#dbe2e7", "#ffcc80"][
+              i % 5
+            ],
           })),
         });
       } catch (error) {
@@ -132,7 +136,9 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Ionicons name="chevron-back" size={28} color="#1c1c1c" />
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={28} color="#1c1c1c" />
+        </TouchableOpacity>
         <Text style={styles.headerText}>Início</Text>
         <TouchableOpacity
           style={styles.settingsButton}
@@ -188,8 +194,29 @@ export default function HomeScreen() {
         <Text style={styles.reportText}>Gerar Relatório</Text>
       </TouchableOpacity>
 
-      {/* Bottom Navigation with gradient icons */}
       <View style={styles.bottomNav}>
+        <TouchableOpacity
+          onPress={() => {
+            setActiveTab("user");
+            router.push("/profile");
+          }}
+        >
+          {activeTab === "user" ? (
+            <LinearGradient
+              colors={["#278C67", "#1E342D"]}
+              start={{ x: 0.1, y: 0.1 }}
+              end={{ x: 0.9, y: 0.9 }}
+              style={styles.navIconActive}
+            >
+              <Ionicons name="person-outline" size={28} color="#ffffff" />
+            </LinearGradient>
+          ) : (
+            <View style={styles.navIconInactive}>
+              <Ionicons name="person-outline" size={28} color="#BDBDBD" />
+            </View>
+          )}
+        </TouchableOpacity>
+
         <TouchableOpacity onPress={() => setActiveTab("home")}>
           {activeTab === "home" ? (
             <LinearGradient
@@ -203,23 +230,6 @@ export default function HomeScreen() {
           ) : (
             <View style={styles.navIconInactive}>
               <Ionicons name="home" size={28} color="#BDBDBD" />
-            </View>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => setActiveTab("leaf")}>
-          {activeTab === "leaf" ? (
-            <LinearGradient
-              colors={["#278C67", "#1E342D"]}
-              start={{ x: 0.1, y: 0.1 }}
-              end={{ x: 0.9, y: 0.9 }}
-              style={styles.navIconActive}
-            >
-              <Ionicons name="leaf-outline" size={28} color="#ffffff" />
-            </LinearGradient>
-          ) : (
-            <View style={styles.navIconInactive}>
-              <Ionicons name="leaf-outline" size={28} color="#BDBDBD" />
             </View>
           )}
         </TouchableOpacity>
@@ -328,7 +338,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     padding: 20,
     width: 150,
-    height:150,
+    height: 150,
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
