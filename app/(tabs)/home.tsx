@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { G, Circle, Text as SvgText } from "react-native-svg";
 import { Ionicons } from "@expo/vector-icons";
 import * as Font from "expo-font";
 import axios from "axios";
+import { LinearGradient } from "expo-linear-gradient";
 
 type DataItem = {
   key: number;
@@ -28,34 +29,15 @@ export default function HomeScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const [animatedData, setAnimatedData] = useState<number[]>([]);
-  const [dataSets, setDataSets] = useState<Record<string, DataItem[]>>({
+  const [activeTab, setActiveTab] = useState<"home" | "leaf" | "time">("home");
+
+  const [dataSets, setDataSets] = useState<Record<DatasetKey, DataItem[]>>({
     Estoque: [],
     Vencimento: [],
-    MenorEstoque: [],
+    "Menor Estoque": [],
   });
+
   const animationRef = React.useRef<number | null>(null);
-
-  useEffect(() => {
-    const targetValues = dataSets[selectedDataset].map((item) => item.value);
-    setAnimatedData(targetValues.map(() => 0));
-    let step = 0;
-    const steps = 20;
-
-    animationRef.current = setInterval(() => {
-      step++;
-      const newData = targetValues.map((val, i) =>
-        Math.min(val, Math.round((val / steps) * step))
-      );
-      setAnimatedData(newData);
-      if (step >= steps && animationRef.current) {
-        clearInterval(animationRef.current);
-      }
-    }, 30);
-
-    return () => {
-      if (animationRef.current) clearInterval(animationRef.current);
-    };
-  }, [selectedDataset]);
 
   useEffect(() => {
     async function loadFonts() {
@@ -71,13 +53,15 @@ export default function HomeScreen() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const baseURL = "http://10.171.56.116:8080"; 
-
-        const [estoqueRes, vencimentoRes, menorEstoqueRes] = await Promise.all([
-          axios.get(`${baseURL}/medicamentos/disponibilidade`),
-          axios.get(`${baseURL}/medicamentos/estoque-vencido-vs-regular`),
-          axios.get(`${baseURL}/medicamentos/menor-estoque`), 
-        ]);
+        const estoqueRes = await axios.get(
+          "http://192.168.18.191:8080/medicamentos/disponibilidade"
+        );
+        const vencimentoRes = await axios.get(
+          "http://192.168.18.191:8080/medicamentos/estoque-vencido-vs-regular"
+        );
+        const menorEstoqueRes = await axios.get(
+          "http://192.168.18.191:8080/medicamentos/menor-estoque"
+        );
 
         setDataSets({
           Estoque: estoqueRes.data.map((item: any, i: number) => ({
@@ -90,15 +74,13 @@ export default function HomeScreen() {
             key: i + 1,
             label: item.nome,
             value: item.valor,
-            color: ["#f44336", "#ff9800", "#4caf50"][i % 3],
+            color: ["#F2A384", "#ff9800", "#4caf50"][i % 3],
           })),
-          MenorEstoque: menorEstoqueRes.data.map((item: any, i: number) => ({
+          "Menor Estoque": menorEstoqueRes.data.map((item: any, i: number) => ({
             key: i + 1,
             label: item.nome,
             value: item.quantidade,
-            color: ["#00968a", "#f2a384", "#39d2c0", "#dbe2e7", "#ffcc80"][
-              i % 5
-            ],
+            color: ["#00968a", "#f2a384", "#39d2c0", "#dbe2e7", "#ffcc80"][i % 5],
           })),
         });
       } catch (error) {
@@ -139,7 +121,8 @@ export default function HomeScreen() {
     );
   }
 
-  const data = dataSets[selectedDataset].map((item, index) => ({
+  const rawData = dataSets[selectedDataset] || [];
+  const data = rawData.map((item, index) => ({
     ...item,
     value: animatedData[index] || 0,
     svg: { fill: item.color, onPress: () => setSelectedSlice(item) },
@@ -151,7 +134,12 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <Ionicons name="chevron-back" size={28} color="#1c1c1c" />
         <Text style={styles.headerText}>Início</Text>
-        <Ionicons name="settings-outline" size={28} color="#1c1c1c" />
+        <TouchableOpacity
+          style={styles.settingsButton}
+          onPress={() => console.log("Configurações")}
+        >
+          <Ionicons name="settings-outline" size={28} color="#1c1c1c" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.chartWrapper}>
@@ -200,10 +188,58 @@ export default function HomeScreen() {
         <Text style={styles.reportText}>Gerar Relatório</Text>
       </TouchableOpacity>
 
+      {/* Bottom Navigation with gradient icons */}
       <View style={styles.bottomNav}>
-        <Ionicons name="home" size={28} color="#00968a" />
-        <Ionicons name="leaf-outline" size={28} color="#BDBDBD" />
-        <Ionicons name="time-outline" size={28} color="#BDBDBD" />
+        <TouchableOpacity onPress={() => setActiveTab("home")}>
+          {activeTab === "home" ? (
+            <LinearGradient
+              colors={["#278C67", "#1E342D"]}
+              start={{ x: 0.1, y: 0.1 }}
+              end={{ x: 0.9, y: 0.9 }}
+              style={styles.navIconActive}
+            >
+              <Ionicons name="home" size={28} color="#ffffff" />
+            </LinearGradient>
+          ) : (
+            <View style={styles.navIconInactive}>
+              <Ionicons name="home" size={28} color="#BDBDBD" />
+            </View>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => setActiveTab("leaf")}>
+          {activeTab === "leaf" ? (
+            <LinearGradient
+              colors={["#278C67", "#1E342D"]}
+              start={{ x: 0.1, y: 0.1 }}
+              end={{ x: 0.9, y: 0.9 }}
+              style={styles.navIconActive}
+            >
+              <Ionicons name="leaf-outline" size={28} color="#ffffff" />
+            </LinearGradient>
+          ) : (
+            <View style={styles.navIconInactive}>
+              <Ionicons name="leaf-outline" size={28} color="#BDBDBD" />
+            </View>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => setActiveTab("time")}>
+          {activeTab === "time" ? (
+            <LinearGradient
+              colors={["#278C67", "#1E342D"]}
+              start={{ x: 0.1, y: 0.1 }}
+              end={{ x: 0.9, y: 0.9 }}
+              style={styles.navIconActive}
+            >
+              <Ionicons name="time-outline" size={28} color="#ffffff" />
+            </LinearGradient>
+          ) : (
+            <View style={styles.navIconInactive}>
+              <Ionicons name="time-outline" size={28} color="#BDBDBD" />
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -232,6 +268,7 @@ const Labels = ({ selectedSlice }: LabelsProps) => {
     </G>
   );
 };
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F5F6FA", paddingTop: 60 },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
@@ -256,7 +293,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     width: 200,
-    fontSize: 18,
     alignSelf: "center",
     shadowColor: "#000",
     shadowOpacity: 0.1,
@@ -291,7 +327,8 @@ const styles = StyleSheet.create({
   reportButton: {
     backgroundColor: "#FFF",
     padding: 20,
-    width: 170,
+    width: 150,
+    height:150,
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
@@ -309,14 +346,36 @@ const styles = StyleSheet.create({
     color: "#1c1c1c",
     fontFamily: "PoppinsBold",
     fontSize: 18,
+    textAlign: "center",
   },
   bottomNav: {
     flexDirection: "row",
     justifyContent: "space-around",
     padding: 20,
     marginTop: "auto",
-    borderTopWidth: 1,
-    borderColor: "#E0E0E0",
-    backgroundColor: "#FFF",
+  },
+  navIconActive: {
+    padding: 20,
+    borderRadius: 50,
+    shadowColor: "#1E342D",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  navIconInactive: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 50,
+  },
+  settingsButton: {
+    backgroundColor: "#F8FBFF",
+    padding: 12,
+    borderRadius: 12,
+    shadowColor: "#333",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 5,
   },
 });
