@@ -6,10 +6,13 @@ import {
   StyleSheet,
   Image,
   Text,
+  Alert,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useFonts } from "expo-font";
-import { useRouter } from "expo-router"; 
+import { useRouter } from "expo-router";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const options = {
   headerShown: false,
@@ -17,7 +20,7 @@ export const options = {
 };
 
 export default function LoginScreen() {
-  const router = useRouter(); 
+  const router = useRouter();
 
   const [fontsLoaded] = useFonts({
     Oblong: require("../../assets/fonts/oblong.ttf"),
@@ -25,19 +28,39 @@ export default function LoginScreen() {
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [loading, setLoading] = useState(false);
 
   if (!fontsLoaded) return null;
 
-  const handleLogin = () => {
-    console.log("Email:", email);
-    console.log("Senha:", senha);
-    router.replace("/home"); 
+  const handleLogin = async () => {
+    if (!email || !senha) {
+      Alert.alert("Atenção", "Preencha todos os campos!");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await axios.post("http://10.35.233.116:8080/auth/usuario/login", {
+        email,
+        senha,
+      });
+
+      await AsyncStorage.setItem("token", res.data.token);
+      await AsyncStorage.setItem("email", res.data.email);
+      await AsyncStorage.setItem("cargo", res.data.cargo);
+      router.replace("/home");
+    } catch (err) {
+      Alert.alert("Erro", "Email ou senha incorretos.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <View style={styles.container}>
       <Image
-        source={require("../../assets/images/appLogo.png")} 
+        source={require("../../assets/images/appLogo.png")}
         style={styles.logo}
         resizeMode="contain"
       />
@@ -51,6 +74,7 @@ export default function LoginScreen() {
           keyboardType="email-address"
           value={email}
           onChangeText={setEmail}
+          autoCapitalize="none"
         />
       </View>
 
@@ -66,8 +90,10 @@ export default function LoginScreen() {
         />
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Entrar</Text>
+      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+        <Text style={styles.buttonText}>
+          {loading ? "Entrando..." : "Entrar"}
+        </Text>
       </TouchableOpacity>
     </View>
   );
