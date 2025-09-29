@@ -14,6 +14,8 @@ import * as Font from "expo-font";
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import * as Print from "expo-print";
+import * as FileSystem from "expo-file-system";
 
 type DataItem = {
   key: number;
@@ -95,6 +97,12 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
+    if (dataSets[selectedDataset].length > 0) {
+      setSelectedSlice(dataSets[selectedDataset][0]);
+    }
+  }, [dataSets, selectedDataset]);
+
+  useEffect(() => {
     if (animationRef.current) clearInterval(animationRef.current);
 
     const targetValues = dataSets[selectedDataset].map((item) => item.value);
@@ -132,6 +140,35 @@ export default function HomeScreen() {
     svg: { fill: item.color, onPress: () => setSelectedSlice(item) },
     key: item.key,
   }));
+
+  // const generatePDF = async () => {
+  //   try {
+  //     const htmlContent = `
+  //       <h1>Relatório: ${selectedDataset}</h1>
+  //       <ul>
+  //         ${dataSets[selectedDataset]
+  //           .map(
+  //             (item) =>
+  //               `<li><strong>${item.label}:</strong> ${item.value} unidades</li>`
+  //           )
+  //           .join("")}
+  //       </ul>
+  //     `;
+
+  //     const { uri } = await Print.printToFileAsync({
+  //       html: htmlContent,
+  //       base64: false,
+  //     });
+
+  //     // const fileName = `${(FileSystem as any).documentDirectory}Relatorio.pdf`;
+
+  //     // await FileSystem.moveAsync({ from: uri, to: fileName });
+
+  //     // alert(`PDF salvo em: ${fileName}`);
+  //   } catch (error) {
+  //     console.error("Erro ao gerar PDF:", error);
+  //   }
+  // };
 
   return (
     <View style={styles.container}>
@@ -256,7 +293,6 @@ export default function HomeScreen() {
 }
 
 type LabelsProps = { selectedSlice: DataItem | null };
-
 const Labels = ({ selectedSlice }: LabelsProps) => {
   if (!selectedSlice) return null;
   return (
@@ -304,11 +340,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     width: 200,
     alignSelf: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 3,
   },
   dropdownText: {
     color: "#333",
@@ -373,11 +404,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 8,
   },
-  navIconInactive: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 50,
-  },
+  navIconInactive: { backgroundColor: "#fff", padding: 20, borderRadius: 50 },
   settingsButton: {
     backgroundColor: "#F8FBFF",
     padding: 12,

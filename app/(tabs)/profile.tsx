@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Font from "expo-font";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 
 type User = {
   login: string;
@@ -16,6 +18,8 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [avatarColor, setAvatarColor] = useState({ bg: "#00968a", text: "#fff" });
 
   useEffect(() => {
     async function loadFonts() {
@@ -28,27 +32,50 @@ export default function ProfileScreen() {
   }, []);
 
   useEffect(() => {
-    async function fetchUser() {
+    const fetchUser = async () => {
       try {
-        // Simulação de dados do usuário
-        const data: User = {
-          login: "pedro.luiz",
-          nome: "Pedro Luiz",
-          cargo: "Administrador",
-          instituicao: "Hospital Central",
-        };
-        setUser(data);
+        setLoading(true);
+        const token = await AsyncStorage.getItem("token");
+        if (!token) throw new Error("Token não encontrado");
+
+        const { data } = await axios.get("http://10.35.233.116:8080/usuarios/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setUser({
+          login: data.emailUsuario,
+          nome: data.nomeUsuario,
+          cargo: data.cargoUsuario,
+          instituicao: data.instituicaoUsuario,
+          avatarUrl: data.avatarUrl,
+        });
+
+        const colors = ["#00968a", "#f2a384", "#39d2c0"];
+        const textColors = ["#ffffff"];
+        const bg = colors[Math.floor(Math.random() * colors.length)];
+        const text = textColors[Math.floor(Math.random() * textColors.length)];
+        setAvatarColor({ bg, text });
       } catch (error) {
-        console.error("Erro ao buscar usuário", error);
+        console.error("Erro ao buscar dados do usuário:", error);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
     fetchUser();
   }, []);
 
-  if (!fontsLoaded || !user) {
+  const getInitials = (fullName: string) => {
+    if (!fullName) return "";
+    const names = fullName.trim().split(" ");
+    if (names.length === 1) return names[0][0].toUpperCase();
+    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+  };
+
+  if (!fontsLoaded || loading || !user) {
     return (
       <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#00968a" />
         <Text>Carregando dados...</Text>
       </View>
     );
@@ -57,24 +84,29 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} />
+        <TouchableOpacity onPress={() => router.push("/home")}>
+          <Ionicons name="chevron-back" size={28} />
         </TouchableOpacity>
         <Text style={styles.headerText}>Perfil</Text>
-        <Ionicons name="settings-outline" size={24} />
+        <Ionicons name="settings-outline" size={28} />
       </View>
 
       <View style={styles.avatarWrapper}>
-        <TouchableOpacity>
+        {user.avatarUrl ? (
           <Image
-            source={{
-              uri: user.avatarUrl || "https://via.placeholder.com/120",
-            }}
+            source={{ uri: user.avatarUrl }}
             style={styles.avatar}
           />
-        </TouchableOpacity>
+        ) : (
+          <View style={[styles.avatarPlaceholder, { backgroundColor: avatarColor.bg }]}>
+            <Text style={[styles.avatarInitials, { color: avatarColor.text }]}>
+              {getInitials(user.nome)}
+            </Text>
+          </View>
+        )}
       </View>
 
+      {/* Dados do usuário */}
       <View style={styles.form}>
         <Text style={styles.label}>Login</Text>
         <View style={styles.dataWrapper}>
@@ -127,6 +159,18 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     borderWidth: 3,
     borderColor: "green",
+  },
+  avatarPlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarInitials: {
+    fontSize: 36,
+    fontWeight: "bold",
+    fontFamily: "Poppins",
   },
 
   form: {

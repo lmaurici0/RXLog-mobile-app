@@ -41,10 +41,13 @@ export default function LoginScreen() {
     try {
       setLoading(true);
 
-      const res = await axios.post("http://10.35.233.116:8080/auth/usuario/login", {
-        email,
-        senha,
-      });
+      const res = await axios.post(
+        "http://10.35.233.116:8080/auth/usuario/login",
+        {
+          email,
+          senha,
+        }
+      );
 
       await AsyncStorage.setItem("token", res.data.token);
       await AsyncStorage.setItem("email", res.data.email);
@@ -66,7 +69,12 @@ export default function LoginScreen() {
       />
 
       <View style={styles.inputContainer}>
-        <MaterialIcons name="email" size={20} color="black" style={styles.icon} />
+        <MaterialIcons
+          name="email"
+          size={20}
+          color="black"
+          style={styles.icon}
+        />
         <TextInput
           placeholder="Email"
           placeholderTextColor="#999"
@@ -79,18 +87,28 @@ export default function LoginScreen() {
       </View>
 
       <View style={styles.inputContainer}>
-        <MaterialIcons name="lock" size={20} color="black" style={styles.icon} />
+        <MaterialIcons
+          name="lock"
+          size={20}
+          color="black"
+          style={styles.icon}
+        />
         <TextInput
           placeholder="Senha"
           placeholderTextColor="#999"
           secureTextEntry
           style={styles.input}
           value={senha}
-          onChangeText={setSenha}
+          onChangeText={(text) => setSenha(text.toLowerCase())} 
+          autoCapitalize="none"
         />
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleLogin}
+        disabled={loading}
+      >
         <Text style={styles.buttonText}>
           {loading ? "Entrando..." : "Entrar"}
         </Text>
